@@ -1,0 +1,2 @@
+import {db,origin,digest,json,fail} from '@/db/store';
+export async function POST(req:Request){try{origin(req);const token=req.headers.get('cookie')?.match(/(?:^|;\s*)dcmc_session=([^;]+)/)?.[1];if(token)await db().prepare('DELETE FROM sessions WHERE id=?').bind(await digest(token)).run();return json({ok:true},200,{'Set-Cookie':'dcmc_session=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0; Secure'});}catch(e){return fail(e)}}
