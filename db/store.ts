@@ -5,7 +5,7 @@ export const uid=()=>crypto.randomUUID();
 export const now=()=>new Date().toISOString();
 export const today=()=>new Date(Date.now()+7*3600000).toISOString().slice(0,10);
 export const permissionsList=['inventory.write','deposit.write','history.all'];
-export const channels:Record<string,string>={setoran:'DISCORD_SETORAN_WEBHOOK',inventory:'DISCORD_INVENTORY_WEBHOOK',finance:'DISCORD_FINANCE_WEBHOOK',transactions:'DISCORD_TRANSACTION_WEBHOOK',alerts:'DISCORD_ALERTS_WEBHOOK'};
+export const channels:Record<string,string>={setoran:'DISCORD_SETORAN_WEBHOOK',inventory:'DISCORD_INVENTORY_WEBHOOK',deposit:'DISCORD_DEPOSIT_WEBHOOK',withdraw:'DISCORD_WITHDRAW_WEBHOOK',transactions:'DISCORD_TRANSACTION_WEBHOOK',alerts:'DISCORD_ALERTS_WEBHOOK'};
 export async function digest(s:string){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s)))).map(x=>x.toString(16).padStart(2,'0')).join('');}
 export async function hashPin(pin:string,salt:string){const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(pin),'PBKDF2',false,['deriveBits']);return Array.from(new Uint8Array(await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:100000,hash:'SHA-256'},key,256))).map(x=>x.toString(16).padStart(2,'0')).join('');}
 export function eq(a:string,b:string){let v=a.length^b.length;for(let i=0;i<a.length;i++)v|=a.charCodeAt(i)^b.charCodeAt(i);return v===0;}

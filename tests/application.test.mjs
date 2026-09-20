@@ -23,7 +23,7 @@ await test('Empty DCMC database and all core transactions on Next.js',async()=>{
   await act({action:'player',id:'QA-1',name:'Test Player',rank:'Member',status:'Active',join_date:initial.today});
   await act({action:'item',id:'QA-item',name:'Test item',category:'General',unit:'pcs',minimum:5});
   const tx=x=>({action:'transaction',request_id:crypto.randomUUID(),operator:'Test',date:initial.today,...x});
-  const dep=tx({type:'Deposit',player_id:'QA-1',amount:1000,category:'Weekly'});const saved=await act(dep);assert.equal((await act(dep)).id,saved.id);assert.equal((await call('/api/state')).data.summary.balance,1000);
+  const dep=tx({type:'Deposit',player_id:'QA-1',amount:1000,category:'Weekly'});const saved=await act(dep);assert.equal((await act(dep)).id,saved.id);let depositedState=(await call('/api/state')).data;assert.equal(depositedState.summary.balance,1000);assert.deepEqual(depositedState.settings.notifications.filter(n=>n.transaction_id===saved.id).map(n=>n.channel).sort(),['setoran','transactions']);
   await act(tx({type:'Correction',original_id:saved.id,description:'Test correction'}));assert.equal((await call('/api/state')).data.summary.balance,0);
   assert.equal((await call('/api/action',tx({type:'Correction',original_id:saved.id,description:'Duplicate'}))).status,400);
   await act(tx({type:'Inventory In',item_id:'QA-item',quantity:10,description:'Test stock'}));
@@ -38,12 +38,15 @@ await test('Empty DCMC database and all core transactions on Next.js',async()=>{
   assert.deepEqual(state.settings.notifications.filter(n=>n.transaction_id===entry.id).map(n=>n.channel).sort(),['inventory','setoran','transactions']);
   for(const invalid of [{quantity:0},{quantity:-1},{quantity:1.5},{item_id:'missing'},{player_id:'missing'},{deposit_kind:'invalid'}])assert.equal((await call('/api/action',{...itemDeposit,...invalid,request_id:crypto.randomUUID()},mc)).status,400);
   assert.equal((await call('/api/action',tx({type:'Inventory Out',item_id:'QA-item',quantity:1}),mc)).status,403);
+  const income=await act(tx({type:'Income',amount:500,category:'Other Income',description:'Organization deposit'}));
+  const expense=await act(tx({type:'Expense',amount:200,category:'Operational',description:'Organization withdraw'}));
+  state=(await call('/api/state')).data;assert.deepEqual(state.settings.notifications.filter(n=>n.transaction_id===income.id).map(n=>n.channel).sort(),['deposit','transactions']);assert.deepEqual(state.settings.notifications.filter(n=>n.transaction_id===expense.id).map(n=>n.channel).sort(),['transactions','withdraw']);
   await act(tx({type:'Inventory Out',item_id:'QA-item',quantity:10,description:'Use donated stock'}));
   assert.equal((await call('/api/action',tx({type:'Correction',original_id:entry.id,description:'Cannot reverse used stock'}))).status,400);
   assert.equal((await call('/api/state')).data.items[0].stock,2);
   await act(tx({type:'Inventory In',item_id:'QA-item',quantity:10,description:'Restore stock'}));
   const reversal=await act(tx({type:'Correction',original_id:entry.id,description:'Reverse item deposit'}));
-  state=(await call('/api/state')).data;assert.equal(state.items[0].stock,0);assert.equal(state.summary.balance,0);assert.equal(state.transactions.find(t=>t.id===reversal.id).original_type,'Deposit');
+  state=(await call('/api/state')).data;assert.equal(state.items[0].stock,0);assert.equal(state.summary.balance,300);assert.equal(state.transactions.find(t=>t.id===reversal.id).original_type,'Deposit');
   assert.equal((await call('/api/action',tx({type:'Correction',original_id:entry.id,description:'Duplicate'}))).status,400);
   const fd=new FormData();fd.append('file',new Blob([Uint8Array.from([137,80,78,71,13,10,26,10])],{type:'image/png'}),'proof.png');const upload=await fetch(origin+'/api/proof',{method:'POST',headers:{Origin:origin,Cookie:cookie},body:fd});assert.equal(upload.status,200);const proof=await upload.json();assert.equal((await call('/api/proof?key='+proof.key)).status,200);assert.equal((await call('/api/proof?key='+proof.key,null,mc)).status,404);
   assert.equal((await call('/api/report?from=2020-01-01&to=2100-01-01')).status,200);assert.equal((await call('/api/state',null,'')).status,401);

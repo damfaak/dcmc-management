@@ -13,7 +13,7 @@ Hanya profil Owner (dan Member jika dipilih), role, permission, serta nama chann
    - `TURSO_AUTH_TOKEN`: token database, hanya di server.
    - `SETUP_OWNER_PIN`: 4 angka untuk PIN Owner awal, wajib; tidak ada PIN default.
    - `SETUP_MEMBER_PIN`: opsional, 4 angka berbeda dari Owner.
-   - `DISCORD_*_WEBHOOK`: opsional; isi hanya untuk channel yang digunakan.
+   - `DISCORD_SETORAN_WEBHOOK`, `DISCORD_DEPOSIT_WEBHOOK`, `DISCORD_WITHDRAW_WEBHOOK`, `DISCORD_INVENTORY_WEBHOOK`, `DISCORD_TRANSACTION_WEBHOOK`, dan `DISCORD_ALERTS_WEBHOOK`: opsional; isi hanya untuk channel yang digunakan.
 4. Terapkan schema ke database target: simpan nilai environment yang sama ke `.env.local`, lalu jalankan `pnpm db:migrate`. File ini tidak boleh masuk Git.
 5. Deploy dengan framework Next.js, build `pnpm build`, Node.js 24.
 6. Login dengan PIN Owner yang dipilih. Buat player/item dan masukkan transaksi pertama dari aplikasi.
